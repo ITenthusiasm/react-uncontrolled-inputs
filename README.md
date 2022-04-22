@@ -13,7 +13,7 @@ First, I want to remind all of us of what forms look like when we fill them with
 ```tsx
 import React, { useState } from "react";
 
-function PageWithForm() {
+export default function PageWithForm() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [comment, setComment] = useState("");
@@ -166,7 +166,7 @@ const formDataReducer = (state: FormData, action: Partial<FormData>) => ({
   ...action,
 });
 
-function PageWithForm() {
+export default function PageWithForm() {
   const [formData, setFormData] = useReducer(formDataReducer, initialFormData);
 
   type InputElements = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
@@ -287,7 +287,7 @@ Did you know that it's possible to handle forms using just pure HTML and JS? No,
 import React from "react";
 import "./form-styles.scss";
 
-function PageWithForm() {
+export default function PageWithForm() {
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const { elements } = event.currentTarget;
