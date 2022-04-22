@@ -1,6 +1,6 @@
 # You Don't Need All That React State in Your Forms
 
-It's very common for frontend applications to include some kind of form. Unfortunately, when it comes to _React_ applications specifically, I often see people building out forms with an unnecessarily high number of controlled inputs. This typically adds more complexity to the form without affording any real benefits. I used to do the same thing. And I can't blame others or even my old self for this poor habit. After all, the official React Docs (at the time of this writing) say:
+It's very common for frontend applications to include some kind of form. Unfortunately, when it comes to _React_ applications specifically, I often see people building out forms with an unnecessarily high number of controlled inputs. This typically adds more complexity to the form without affording any real benefits. I used to do the same thing. And I can't blame others or even my old self for this poor habit. After all, the official [React Docs](https://reactjs.org/docs/uncontrolled-components.html) (at the time of this writing) say:
 
 > In most cases, we recommend using controlled components to implement forms. In a controlled component, form data is handled by a React component. The alternative is uncontrolled components, where form data is handled by the DOM itself.
 
@@ -132,7 +132,7 @@ function PageWithForm() {
 
 (Note that I added a little bit of styling to the `form` element to make it slightly easier on the eyes in the browser.)
 
-Honestly... Having to write all that out really hurt. You'll notice that there's _a lot_ of awkward code that looks redundant with this approach. But this isn't anything new. Our React friends mention this problem in the docs:
+Honestly... Having to write all that out really hurt. You'll notice that there's _a lot_ of awkward code that looks redundant with this approach. But this isn't anything new. Our React friends mention this problem in the [docs](https://reactjs.org/docs/forms.html#alternatives-to-controlled-components):
 
 > It can sometimes be tedious to use controlled components, because you need to write an event handler for every way your data can change and pipe all of the input state through a React component.
 
@@ -273,7 +273,7 @@ function PageWithForm() {
 
 One hook call, one event handler, and one place to store our form state (as opposed to having it scattered across variables). Everything's good, right? Eh... Mostly.
 
-It still feels like we have some redundancy here. Don't get me wrong, the decrease in lines showing `useState` and `handle*Change` is definitely great! But now we have the same form data properties (eg. `firstName`) being shown over and over and over again. _And we're still redundantly polluting all of the `input` props!_
+It still feels like we have some redundancy here. Don't get me wrong, the decrease in lines showing `useState` and `handle*Change` is definitely great! But now we have the same form data properties (e.g., `firstName`) being shown over and over and over again. _And we're still redundantly polluting all of the `input` props!_
 
 The approach is nice, but it's roughly the same lines of code as the previous one. Actually, with the current formatter, it's a few lines _longer_. This approach also adds some overhead to new devs by requiring them to learn the slightly-more-complex `useReducer` hook. (And the reducer pattern we used for the form is... a bit unorthodox for reducers.)
 
@@ -349,7 +349,7 @@ function PageWithForm() {
 Note that I've moved the styles into an SCSS file.
 
 ```scss
-/* ./form-styles.scss */
+// ./form-styles.scss
 
 form {
   --spacing: 30px;
@@ -374,7 +374,9 @@ form {
 }
 ```
 
-Now this approach is glorious! No unnecessary state variables... No unnecessary complexity... Less code redundancy... And surely you can see that this implementation is _far_ less verbose than the previous ones even if you're not following along in a codesandbox. This implementation uses almost half the lines of code compared to the previous implementations (ignoring styles). _HALF_ (almost).
+Now this approach is glorious! No unnecessary state variables... No unnecessary complexity... Less code redundancy... And surely you can see that this implementation is _far_ less verbose than the previous ones (even if you're not following along in a codesandbox). This implementation uses almost half the lines of code compared to the previous implementations (ignoring styles). _HALF_ (almost).
+
+(Note: I'm aware of the `defaultValue` React warning for `select` elements; but I am ignoring it since our input is uncontrolled, and the point of this article is to highlight what's possible with pure HTML+JS, _not_ React-specific syntax.)
 
 If you're not familiar with `form.elements`, you can see [MDN's Docs](https://developer.mozilla.org/en-US/docs/Web/API/HTMLFormElement/elements). But basically, the `form.elements` property allows you to grab all of a form's input-related elements via their `id`s or `name`s. We're using the [`namedItem`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLFormControlsCollection/namedItem) method for this, but you can also destructure everything from `form.elements` directly:
 
@@ -409,11 +411,11 @@ function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
 // ...
 ```
 
-Alternatively, you can just grab all the `input`s as if they come from an array. Please see the documentation on `form.elements` for more info.
+Alternatively, you can just grab all the `input`s as if they're coming from an array. Please see the documentation on `form.elements` for more info.
 
 You'll notice that things get a little more verbose for TypeScript users, as you'll have to specify the properties on `form.elements`, as well as the input elements to which said properties are mapped. For the JS-only users... you don't have to worry about defining interfaces. You can just destructure the elements as normal.
 
-(For the TS users, note that there is a simpler way to handle the typings for form controls; so don't freak out about what you see above. More than likely, your form data is already an explicit type defined somewhere in your codebase... at least it should be. If that's the case, then you can make a utility type that maps the keys of your form data to the proper input element. From personal experience, creating this utility type is rather simple. However, I don't intend to go over the approach in this article. If there's enough interest, perhaps I'll add it here later -- or in a separate article.)
+(For the TS users, note that there is a simpler way to handle the typings for form controls; so don't freak out about what you see above. More than likely, your form data is already an explicit type defined somewhere in your codebase... at least it should be. If that's the case, then you can make a utility type that maps the keys of your form data to the proper input element. From personal experience, creating this utility type is rather simple. However, I don't intend to go over the approach in this article. If there's enough interest, perhaps I'll add it here later — or in a separate article.)
 
 ## One More Benefit to Uncontrolled Inputs
 
@@ -427,19 +429,19 @@ Typically, the _default_ should be to use uncontrolled inputs, _not_ controlled 
 
 ## "But What about Complex Forms?"
 
-Although we've covered how to handle form submissions and how to work with inputs without state, some of you are probably wondering about more complex situations. Someone may say, "Formatting is a common use case, and you can't format inputs without state." Actually, [I've written another article](https://github.com/ITenthusiasm/react-formatted-inputs) that proves you _can_ format inputs without state... and perhaps more cleanly too.
+Although we've covered how to handle form submissions and how to work with inputs without state, some of you are probably wondering about more complex situations. Someone may say, "Formatting is a common use case, and you can't format inputs without state." Actually, [I've written another article](https://thomason-isaiah.medium.com/do-you-really-need-react-state-to-format-inputs-9d17f5f837fd) that proves you _can_ format inputs without state... and perhaps more cleanly too.
 
-Are you wondering about form validation? [There are native API's for that](https://developer.mozilla.org/en-US/docs/Learn/Forms/Form_validation) which don't require a frontend framework. And they may [make styling easier than you expect](https://developer.mozilla.org/en-US/docs/Web/CSS/:valid).
+Are you wondering about form validation? [There are native API's for that](https://developer.mozilla.org/en-US/docs/Learn/Forms/Form_validation) which don't require a frontend framework. And they may [make styling easier than you'd expect](https://developer.mozilla.org/en-US/docs/Web/CSS/:valid).
 
 Are your form validation use cases more complex? Or perhaps you need access to more precise information, like whether or not a field has already been visited? Then [React Hook Form](https://react-hook-form.com/) is an _excellent_ solution worth checking out. It basically seeks to provide these common form features while minimizing the number of state variables, re-renders, and unnecessary abstractions in your code. It plays very nicely with basic HTML/CSS/JS too!
 
-(If you're familiar with `Formik`, then I'd recommend trying out `React Hook Form` if you haven't done so yet. This is mainly because `Formik` takes a state-first approach, thus increasing your re-renders. `Formik` also makes it more likely that you'll drift to unnecessary abstractions prematurely -- like abstracted components -- when simple HTML could suffice just fine. That's not to say that `Formik` is bad library. But it'll likely be harder to reap the benefits mentioned in this article if you heavily depend on `Formik` by default.)
+(If you're familiar with `Formik`, then I'd recommend trying out `React Hook Form` if you haven't done so yet. This is mainly because `Formik` takes a state-first approach, thus increasing your re-renders. `Formik` also makes it more likely that you'll drift towards unnecessary abstractions prematurely — like abstracted components — when simple HTML could suffice just fine. That's not to say that `Formik` is a bad library. But it'll likely be harder for you to reap the benefits mentioned in this article if you heavily depend on `Formik` by default.)
 
 ## Let's Be Honest...
 
 React is a _great_ frontend framework. This can be seen clearly by how widely it's used and appreciated. And without their innovation, other loveable frameworks like Vue may not have turned out as nicely as they have today.
 
-But if we're being honest, React has its downsides. And one downside that seems to be common (at least from my experience) is an over reliance on state. We saw it with `redux`. And we still see it today with `form`s. This over reliance on state often makes us look past solutions that are staring us right in the face. (For instance, using the regular form features with pure HTML and JS.) And it results in code that may be less efficient or less easy to maintain.
+But if we're being honest, React has its downsides. And one downside that seems to be common (at least from my experience) is an over-reliance on state in the React community. We saw it with `redux`. And we still see it today with `form`s. This over reliance on state often makes us look past solutions that are staring us right in the face. (For instance, using the regular form features with pure HTML and JS.) And it results in code that may be less efficient or less easy to maintain.
 
 We've been pre-wired to rely on state. But there's more that's possible with plain old HTML/CSS/JS than we'd think.
 
@@ -447,7 +449,7 @@ We've been pre-wired to rely on state. But there's more that's possible with pla
 
 Thankfully, the problem of over-reliance on state doesn't make React a bad framework because React itself doesn't _force_ you to over-rely on state. We _can_ undo those bad instincts by learning the basics, and by choosing only to leverage state _when we truly need to_. This will enhance our capabilities as React developers and help us appreciate the framework much more.
 
-Nothing has been better for my frontend skills than learning how regular HTML, CSS, and JS work _first_. Getting those basic fundamental down has largely improved my code across the apps that I make. I encourage you to strengthen your foundations as well (even if you're confident in those skills because you know React). Here's a pro tip: When you're googling for solutions (as we all do), try to figure out if something is possible with _native_ HTML/CSS/JS features before seeing how to do it in your framework of choice (whether it's React or Vue or Svelte or whatever else). For instance, _start_ by searching "JS how to submit a form", _before_ you search "React how to submit a form". It'll make life much easier.
+Nothing has been better for my frontend skills than learning how regular HTML, CSS, and JS work _first_. Getting those basic fundamental down has largely improved my code across the apps that I make. I encourage you to strengthen your foundations as well (even if you're confident in those skills because you know React). Here's a pro tip: When you're googling for solutions (as we all do), try to figure out if something is possible with _native_ HTML/CSS/JS features before seeing how to do it in your framework of choice (whether it's React or Vue or Svelte or whatever else). For instance, _start_ by searching "JS how to submit a form" _before_ you search "React how to submit a form". It'll make life much easier.
 
 (Yes, I acknowledge that you can technically do _everything_ with raw HTML/CSS/JS, but some of that is painful. The big brain play is to figure out what's easier with native features and what's easier with your frontend framework, and then choose whatever is best.)
 
@@ -455,6 +457,8 @@ Biased "tip" that you can ignore: Try out [`Svelte`](https://svelte.dev/). The f
 
 ---
 
-That's it, friends! I really hope this was helpful! If it was, please consider leaving a clap or sharing this article on Twitter. ([I'm here!](https://twitter.com/ITEnthusiasm)). Or, leave your thoughts in a comment! Perhaps there's something I could correct? My hope is for this article to be a benefit to the community, and feedback helps with making improvements. I'm also considering contributing to the React docs -- if it would be considered helpful. But I'll only know I should do that if this article was actually useful to people.
+That's it, friends! I really hope this was helpful! If it was, please consider leaving a clap or sharing this article on Twitter. ([I'm here!](https://twitter.com/ITEnthusiasm)) Or, leave your thoughts in a comment! Perhaps there's something I could correct? My hope is for this article to be a benefit to the community, and feedback helps with making improvements. I'm also considering contributing to the React docs — if it would be considered helpful. But I'll only know I should do that if this article was actually useful to people.
 
 I wanted to give a special thanks to [@kentcdodds](https://twitter.com/kentcdodds). Although Svelte was the framework that really helped me start learning my fundamentals, I didn't even notice or care about fundamentals until I started watching/reading some of Kent's resources. He's a gifted guy with _really_ good stuff on making React applications and writing tests. See https://kentcdodds.com/courses. Unfortunately, his courses cost money. But, if you can (reasonably) afford them, I'd say they're worth the trade (_especially_ during discounts). They're buy once, keep forever. If you don't want to purchase his courses, then at least check out the articles on his site. They're free, and they're certainly worth reading.
+
+— for the glory of Jesus Christ and the benefit of others, with a thankful heart
