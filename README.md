@@ -6,6 +6,10 @@ It's very common for frontend applications to include some kind of form. Unfortu
 
 But... I don't buy what they're selling me. I'm here to show you a much simpler way to write out your forms.
 
+_**Edit:** [The new React Docs](https://react.dev/reference/react-dom/components/input) now show developers how to properly leverage the browser's native features for form data, and they primarily encourage state when it's truly needed/practical:_
+
+> A controlled input makes sense if you needed state anyway -- for example, to re-render your UI on every edit
+
 ## The Old and Painful Way
 
 First, I want to remind all of us of what forms look like when we fill them with state. I'll use some of the basic kinds of inputs in my example. Feel free to follow along in a codesandbox (or something similar) as you read this article. [This codesandbox](https://codesandbox.io/s/react-uncontrolled-inputs-starting-code-w5c5n1) starts you off with the code you see below.
@@ -290,33 +294,24 @@ import "./form-styles.scss";
 export default function PageWithForm() {
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const { elements } = event.currentTarget;
-
-    const data = {
-      firstName: (elements.namedItem("first-name") as HTMLInputElement).value,
-      lastName: (elements.namedItem("last-name") as HTMLInputElement).value,
-      comment: (elements.namedItem("comment") as HTMLTextAreaElement).value,
-      category: (elements.namedItem("category") as HTMLSelectElement).value,
-      rating: (elements.namedItem("rating") as HTMLInputElement).value,
-      verified: (elements.namedItem("verified") as HTMLInputElement).checked,
-    };
-
-    alert(`Here's your data: ${JSON.stringify(data, undefined, 2)}`);
+    const formData = new FormData(event.currentTarget);
+    const formJson = Object.fromEntries(formData);
+    alert(`Here's your data: ${JSON.stringify(formJson, undefined, 2)}`);
   }
 
   return (
     <form onSubmit={handleSubmit}>
       <label htmlFor="first-name">First Name</label>
-      <input id="first-name" type="text" />
+      <input id="first-name" name="first-name" type="text" />
 
       <label htmlFor="last-name">Last Name</label>
-      <input id="last-name" type="text" />
+      <input id="last-name" name="last-name" type="text" />
 
       <label htmlFor="comment">Comment</label>
-      <textarea id="comment" />
+      <textarea id="comment" name="comment" />
 
       <label htmlFor="category">Category</label>
-      <select id="category">
+      <select id="category" name="category">
         <option value="" selected disabled>
           Select Category
         </option>
@@ -337,7 +332,7 @@ export default function PageWithForm() {
         <label htmlFor="amazing">Amazing</label>
       </fieldset>
 
-      <input id="verified" type="checkbox" />
+      <input id="verified" name="verified" type="checkbox" />
       <label htmlFor="verified">Everything in my review is straight up facts and logic</label>
 
       <button type="submit">Submit</button>
@@ -374,52 +369,20 @@ form {
 }
 ```
 
-Now this approach is glorious! No unnecessary state variables... No unnecessary complexity... Less code redundancy... And surely you can see that this implementation is _far_ less verbose than the previous ones (even if you're not following along in a codesandbox). This implementation uses almost half the lines of code compared to the previous implementations (ignoring styles). _HALF_ (almost).
+Now this approach is glorious! No unnecessary state variables… No unnecessary complexity… Less code redundancy… And surely you can see that this implementation is _far_ less verbose than the previous ones. This implementation uses roughly half the lines of code compared to the previous implementations (ignoring styles). _HALF_.
 
-(Note: I'm aware of the `defaultValue` React warning for `select` elements; but I am ignoring it since our input is uncontrolled, and the point of this article is to highlight what's possible with pure HTML+JS, _not_ React-specific syntax.)
+(Note: I'm aware of the `defaultValue` React warning for `select` elements. However, I am ignoring it since our input is uncontrolled, and the point of this article is to highlight what's possible with pure HTML+JS, _not_ React-specific syntax.)
 
-If you're not familiar with `form.elements`, you can see [MDN's Docs](https://developer.mozilla.org/en-US/docs/Web/API/HTMLFormElement/elements). But basically, the `form.elements` property allows you to grab all of a form's input-related elements via their `id`s or `name`s. We're using the [`namedItem`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLFormControlsCollection/namedItem) method for this, but you can also destructure everything from `form.elements` directly:
+If you're not familiar with the `FormData` class, you can visit [MDN's Docs](https://developer.mozilla.org/en-US/docs/Web/API/FormData) to learn more. But basically, it allows you to extract all of the form data belonging to a `<form>` element. The use of [`Object.fromEntries`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/fromEntries) here is optional, but it helps us convert the form data into a more convenient object syntax.
 
-```ts
-// ...
+There are 2 things to keep in mind when using this approach:
 
-function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-  interface FormDataElements extends HTMLFormControlsCollection {
-    "first-name": HTMLInputElement;
-    "last-name": HTMLInputElement;
-    comment: HTMLTextAreaElement;
-    category: HTMLSelectElement;
-    rating: HTMLInputElement;
-    verified: HTMLInputElement;
-  }
-
-  event.preventDefault();
-  const elements = event.currentTarget.elements as FormDataElements;
-
-  const data = {
-    firstName: elements["first-name"].value,
-    lastName: elements["last-name"].value,
-    comment: elements.comment.value,
-    category: elements.category.value,
-    rating: elements.rating.value,
-    verified: elements.verified.checked,
-  };
-
-  alert(`Here's your data: ${JSON.stringify(data, undefined, 2)}`);
-}
-
-// ...
-```
-
-Alternatively, you can just grab all the `input`s as if they're coming from an array. Please see the documentation on `form.elements` for more info.
-
-You'll notice that things get a little more verbose for TypeScript users, as you'll have to specify the properties on `form.elements`, as well as the input elements to which said properties are mapped. For the JS-only users... you don't have to worry about defining interfaces. You can just destructure the elements as normal.
-
-(For the TS users, note that there is a simpler way to handle the typings for form controls; so don't freak out about what you see above. More than likely, your form data is already an explicit type defined somewhere in your codebase... at least it should be. If that's the case, then you can make a utility type that maps the keys of your form data to the proper input element. From personal experience, creating this utility type is rather simple. However, I don't intend to go over the approach in this article. If there's enough interest, perhaps I'll add it here later — or in a separate article.)
+1. Only form controls that have a valid `name` attribute are included in the form's data. (The `name` _does not_ have to be the same as the `id`.)
+2. `Object.fromEntries` cannot accurately read data from a field with multiple values (e.g., `<select multiple>`). For that, you'll need to use [`FormData.getAll()`](https://developer.mozilla.org/en-US/docs/Web/API/FormData/getAll), then attach the returned value to the object generated by `Object.fromEntries`.
 
 ## One More Benefit to Uncontrolled Inputs
 
-I already gave a few reasons earlier, but another big reason why it's better to use uncontrolled inputs by default is that they _significantly_ reduce the re-renders produced on your page. I know there are some of you who will say this is nitpicky, but this is truthfully worth considering. If you're working with a form/page that uses controlled inputs, then the entire form/page will rerender _every single time the user updates a value_. Every time a letter is typed (or deleted), every time an option is chosen from a `select` element, every time a checkbox is clicked... Boom! Whole re-rerender. This is... inefficient.
+I already gave a few reasons earlier, but another big reason why it's better to use uncontrolled inputs by default is that they _significantly_ reduce the number of re-renders in your application. I know there are some of you who will say this is nitpicky, but this is truly worth considering. If you're working with a form/page that uses controlled inputs, then the entire form/page will rerender _every single time the user updates a value_. Every time a letter is typed (or deleted), every time an option is chosen from a `select` element, every time a checkbox is clicked... Boom! Whole re-rerender! This is... inefficient.
 
 If you want to visualize this a bit more clearly, visit the [React Hook Form](https://react-hook-form.com/) docs and scroll down to the "Isolate Re-renders" demo section. Now imagine that situation when you have forms and components that are even more involved.
 
@@ -431,7 +394,7 @@ Typically, the _default_ should be to use uncontrolled inputs, _not_ controlled 
 
 Although we've covered how to handle form submissions and how to work with inputs without state, some of you are probably wondering about more complex situations. Someone may say, "Formatting is a common use case, and you can't format inputs without state." Actually, [I've written another article](https://thomason-isaiah.medium.com/do-you-really-need-react-state-to-format-inputs-9d17f5f837fd) that proves you _can_ format inputs without state... and perhaps more cleanly too.
 
-Are you wondering about form validation? [There are native API's for that](https://developer.mozilla.org/en-US/docs/Learn/Forms/Form_validation) which don't require a frontend framework. And they may [make styling easier than you'd expect](https://developer.mozilla.org/en-US/docs/Web/CSS/:valid).
+Are you wondering about form validation? [There are native API's for that](https://developer.mozilla.org/en-US/docs/Learn/Forms/Form_validation) which don't require a frontend framework. And they [make styling easier than you'd expect](https://developer.mozilla.org/en-US/docs/Web/CSS/:valid).
 
 Are your form validation use cases more complex? Or perhaps you need access to more precise information, like whether or not a field has already been visited? Then [React Hook Form](https://react-hook-form.com/) is an _excellent_ solution worth checking out. It basically seeks to provide these common form features while minimizing the number of state variables, re-renders, and unnecessary abstractions in your code. It plays very nicely with basic HTML/CSS/JS too!
 
@@ -441,19 +404,23 @@ Are your form validation use cases more complex? Or perhaps you need access to m
 
 React is a _great_ frontend framework. This can be seen clearly by how widely it's used and appreciated. And without their innovation, other loveable frameworks like Vue may not have turned out as nicely as they have today.
 
-But if we're being honest, React has its downsides. And one downside that seems to be common (at least from my experience) is an over-reliance on state in the React community. We saw it with `redux`. And we still see it today with `form`s. This over reliance on state often makes us look past solutions that are staring us right in the face. (For instance, using the regular form features with pure HTML and JS.) And it results in code that may be less efficient or less easy to maintain.
+But if we're being honest, React has its downsides. And one downside that seems to be common (at least from my experience) is an over-reliance on state in the React community. We saw it with `redux`. And we still see it today with `form`s. This over-reliance on state often makes us look past solutions that are staring us right in the face. (For instance, using the native form features with pure HTML and JS.) And it results in code that may be less efficient or less easy to maintain.
 
 We've been pre-wired to rely on state. But there's more that's possible with plain old HTML/CSS/JS than we'd think.
 
-## Correcting Our Instincts
+## Rewiring Our Instincts
 
 Thankfully, the problem of over-reliance on state doesn't make React a bad framework because React itself doesn't _force_ you to over-rely on state. We _can_ undo those bad instincts by learning the basics, and by choosing only to leverage state _when we truly need to_. This will enhance our capabilities as React developers and help us appreciate the framework much more.
 
-Nothing has been better for my frontend skills than learning how regular HTML, CSS, and JS work _first_. Getting those basic fundamental down has largely improved my code across the apps that I make. I encourage you to strengthen your foundations as well (even if you're confident in those skills because you know React). Here's a pro tip: When you're googling for solutions (as we all do), try to figure out if something is possible with _native_ HTML/CSS/JS features before seeing how to do it in your framework of choice (whether it's React or Vue or Svelte or whatever else). For instance, _start_ by searching "JS how to submit a form" _before_ you search "React how to submit a form". It'll make life much easier.
+Nothing has been better for my frontend skills than learning how regular HTML, CSS, and JS work _first_. Getting those basic fundamental down has largely improved my code across the apps that I make. I encourage you to strengthen your foundations as well (even if you're confident in those skills because you know React).
+
+Here's a pro tip: When you're googling for solutions (as we all do), try to figure out if something is possible with _native_ HTML/CSS/JS features before seeing how to do it in your framework of choice (whether it's React or Vue or Svelte or whatever else). For instance, _start_ by searching "JS how to submit a form" _before_ you search "React how to submit a form". It'll make life much easier.
 
 (Yes, I acknowledge that you can technically do _everything_ with raw HTML/CSS/JS, but some of that is painful. The big brain play is to figure out what's easier with native features and what's easier with your frontend framework, and then choose whatever is best.)
 
-Biased "tip" that you can ignore: Try out [`Svelte`](https://svelte.dev/). The framework that _really_ got me to start strengthening my basics wasn't React or Vue... It was Svelte. And that's because Svelte really tries to _enhance_ the existing web features instead of creating completely different concepts (and Svelte has some _really_ awesome features). Truthfully, _I'd encourage you to try learning basic HTML/CSS/JS while sticking to the framework that you're already familiar with_. But if that doesn't work because state variables tempt you, then consider experimenting with Svelte to try recalibrating yourself. Couldn't hurt.
+Biased "tip" that you can ignore: Try out [`Svelte`](https://svelte.dev/). The framework that _really_ got me to start strengthening my basics wasn't React or Vue... It was Svelte. And that's because Svelte really tries to _enhance_ the existing web features instead of creating completely different concepts (and Svelte has some _really_ awesome features).
+
+_I'd highly encourage you to try learning basic HTML/CSS/JS while sticking to the framework that you're already familiar with_. But if that doesn't work because state variables tempt you, then consider experimenting with Svelte to try recalibrating yourself. Couldn't hurt.
 
 ---
 
